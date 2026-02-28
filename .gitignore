@@ -1,1 +1,15 @@
+*.db
+uploads/
+avatars/
+__pycache__/
+*.pyc
+.env
+venv/
+node_modules/
+web/dist/
+.dart_tool/
+.packages
+build/
+*.iml
+.idea/
 .DS_Store

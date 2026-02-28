@@ -1,196 +1,97 @@
 # API Contract
 
 > 프론트엔드/백엔드 에이전트가 공통으로 참조하는 API 계약서.
-> 이 문서가 Single Source of Truth. 양쪽 모두 이 문서를 기준으로 개발한다.
+> 이 문서가 Single Source of Truth.
 
 ## Base URL
 
 | 환경 | URL |
 |------|-----|
 | 로컬 개발 | `http://localhost:8000/api/v1` |
-| 스테이징 | `(미정)` |
-| 프로덕션 | `(미정)` |
+| Android 에뮬레이터 | `http://10.0.2.2:8000/api/v1` |
 
 ## 공통 규칙
 
-### 요청 형식
 - Content-Type: `application/json`
-- 인증: `Authorization: Bearer <token>` (인증 필요 API에 한함)
-
-### 응답 형식
-```json
-// 성공
-{
-  "success": true,
-  "data": { ... }
-}
-
-// 에러
-{
-  "success": false,
-  "error": {
-    "code": "ERROR_CODE",
-    "message": "사람이 읽을 수 있는 메시지"
-  }
-}
-```
-
-### 공통 HTTP 상태 코드
-| 코드 | 의미 |
-|------|------|
-| 200 | 성공 |
-| 201 | 생성 성공 |
-| 400 | 잘못된 요청 |
-| 401 | 인증 필요 |
-| 403 | 권한 없음 |
-| 404 | 리소스 없음 |
-| 500 | 서버 내부 오류 |
+- 인증: **없음** (MVP — parent_id 파라미터로 구분)
 
 ---
 
-## API 엔드포인트
+## 1. Toys (장난감)
 
-<!--
-  아래 예시를 복사해서 실제 API를 추가하세요.
-  각 API는 프론트/백 모두가 동의한 계약입니다.
--->
-
-### 1. 인증 (Auth)
-
-#### `POST /auth/signup`
-회원가입
-
-**Request Body:**
+### `POST /api/v1/toys` — 장난감 생성
+**Request:**
 ```json
-{
-  "email": "user@example.com",
-  "password": "string (min 8자)",
-  "nickname": "string (2~20자)"
-}
+{ "name": "테디베어", "photo_base64": "base64...", "parent_id": "parent-001" }
 ```
-
-**Response 201:**
-```json
-{
-  "success": true,
-  "data": {
-    "userId": "uuid",
-    "email": "user@example.com",
-    "nickname": "string",
-    "createdAt": "2026-02-28T00:00:00Z"
-  }
-}
-```
-
-**Error Cases:**
-| 코드 | code | 조건 |
-|------|------|------|
-| 409 | `DUPLICATE_EMAIL` | 이미 가입된 이메일 |
-| 400 | `INVALID_INPUT` | 유효성 검증 실패 |
-
----
-
-#### `POST /auth/login`
-로그인
-
-**Request Body:**
-```json
-{
-  "email": "user@example.com",
-  "password": "string"
-}
-```
-
 **Response 200:**
 ```json
 {
   "success": true,
   "data": {
-    "accessToken": "jwt-string",
-    "refreshToken": "jwt-string",
-    "user": {
-      "userId": "uuid",
-      "email": "user@example.com",
-      "nickname": "string"
-    }
+    "id": "abc12345",
+    "name": "테디베어",
+    "avatar_path": "avatars/abc12345_avatar.png",
+    "avatar_base64": "base64...",
+    "description": "갈색 곰 인형",
+    "personality": "다정하고 호기심 많은 성격",
+    "color": "갈색",
+    "voice_name": "Puck"
   }
 }
 ```
 
----
-
-<!-- 아래부터 실제 API를 추가하세요 -->
-
-### 2. (도메인 이름)
-
-#### `METHOD /path`
-설명
-
-**인증 필요:** Yes / No
-
-**Request Body / Query Params:**
-```json
-{
-}
-```
-
-**Response CODE:**
-```json
-{
-  "success": true,
-  "data": {
-  }
-}
-```
-
-**Error Cases:**
-| 코드 | code | 조건 |
-|------|------|------|
+### `GET /api/v1/toys?parent_id=parent-001` — 장난감 목록
+### `GET /api/v1/toys/{toy_id}` — 장난감 상세
 
 ---
 
-## 데이터 모델 (공유 타입)
+## 2. Talk (턴제 대화)
 
-> FE/BE 양쪽에서 동일하게 사용하는 데이터 구조를 여기에 정의한다.
-
-### User
+### `POST /api/v1/talk`
+**Request:**
+```json
+{ "toy_id": "abc12345", "message": "안녕!", "session_id": null }
 ```
-{
-  userId: string (uuid)
-  email: string
-  nickname: string (2~20자)
-  createdAt: string (ISO 8601)
-  updatedAt: string (ISO 8601)
-}
-```
-
-### (모델명)
-```
-{
-  id: string (uuid)
-  // 필드 추가
-}
+**Response 200:**
+```json
+{ "success": true, "data": { "reply": "안녕! 오늘 뭐 했어?", "session_id": "sess-001" } }
 ```
 
 ---
 
-## WebSocket / 실시간 통신 (해당 시)
+## 3. TTS
 
-<!-- 실시간 기능이 필요하면 아래 템플릿을 사용하세요 -->
+### `POST /api/v1/tts` — (Live API에서 네이티브 처리)
 
-### 이벤트: `event_name`
-**방향:** Client -> Server / Server -> Client
+---
 
-**Payload:**
+## 4. Logs (대화 기록)
+
+### `GET /api/v1/logs/{toy_id}` — 세션별 대화 기록
+
+---
+
+## 5. Summary (AI 요약)
+
+### `GET /api/v1/summary/{toy_id}` — AI 대화 요약
+
+---
+
+## 6. WebSocket (실시간 음성)
+
+### `ws://localhost:8000/ws/live`
+**Setup Message:**
 ```json
-{
-}
+{ "toy_id": "abc12345" }
 ```
+서버가 Gemini Live API에 연결하고 캐릭터별 시스템 프롬프트를 주입.
+이후 양방향 오디오 프록시.
 
 ---
 
 ## 변경 이력
 
-| 날짜 | 변경 내용 | 작성자 |
-|------|-----------|--------|
-| 2026-02-28 | 초기 템플릿 생성 | - |
+| 날짜 | 변경 내용 |
+|------|-----------|
+| 2026-02-28 | 7개 엔드포인트 + WS 구현 완료 |
